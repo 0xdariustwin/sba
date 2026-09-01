@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Video Content Capture</title>
+  <style>
+    :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+    body { margin: 0; background: #10151f; color: #eef3ff; }
+    main { max-width: 720px; margin: 6vh auto; padding: 32px; background: #182131; border: 1px solid #34425a; border-radius: 18px; }
+    h1 { margin-top: 0; } label { display: block; margin: 20px 0 8px; font-weight: 650; }
+    input, textarea, button { box-sizing: border-box; width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #53647e; font: inherit; }
+    input, textarea { color: inherit; background: #0d1420; } textarea { min-height: 80px; resize: vertical; }
+    button { margin-top: 24px; color: #07101d; background: #70c7ff; border: 0; font-weight: 750; cursor: pointer; }
+    button:disabled { opacity: .6; cursor: wait; } .hint { color: #afbed2; line-height: 1.5; }
+    #status { margin-top: 24px; } pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px; background: #090e16; border-radius: 8px; max-height: 360px; overflow: auto; }
+  </style>
+</head>
+<body><main>
+  <h1>Video Content Capture</h1>
+  <p class="hint">Submit a YouTube video you are authorized to download. The server saves captions, metadata, and sampled screenshots locally.</p>
+  <form id="job-form">
+    <label for="url">YouTube URL</label>
+    <input id="url" name="url" type="url" required placeholder="https://www.youtube.com/watch?v=…">
+    <label for="terms">Transcript search terms <span class="hint">(comma-separated, optional)</span></label>
+    <textarea id="terms" name="terms" placeholder="square root, quadratic formula"></textarea>
+    <label for="interval">Screenshot interval in seconds</label>
+    <input id="interval" name="interval" type="number" min="1" max="60" value="5" required>
+    <button type="submit">Start processing</button>
+  </form>
+  <section id="status" hidden aria-live="polite"><h2>Job status</h2><p id="state"></p><pre id="log"></pre></section>
+</main><script src="/app.js"></script></body>
+</html>
