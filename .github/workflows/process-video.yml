@@ -1,0 +1,94 @@
+name: Process YouTube video
+
+on:
+  workflow_dispatch:
+    inputs:
+      search_terms:
+        description: Optional comma-separated caption search terms
+        required: false
+        type: string
+        default: ''
+      screenshot_interval:
+        description: Seconds between screenshots (1-60)
+        required: true
+        type: choice
+        default: '5'
+        options:
+          - '1'
+          - '2'
+          - '5'
+          - '10'
+          - '15'
+          - '30'
+          - '60'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: process-youtube-video
+  cancel-in-progress: false
+
+jobs:
+  process:
+    name: Download and capture frames
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      YOUTUBE_URL: ${{ secrets.YOUTUBE_URL }}
+      OUTPUT_DIRECTORY: output/github-action
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify URL secret
+        shell: bash
+        run: |
+          if [[ -z "$YOUTUBE_URL" ]]; then
+            echo 'The YOUTUBE_URL repository secret is not configured.' >&2
+            exit 1
+          fi
+          echo "::add-mask::$YOUTUBE_URL"
+
+      - name: Install video tools
+        shell: bash
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes ffmpeg pipx
+          pipx install yt-dlp
+          yt-dlp --version
+          ffmpeg -version | head -n 1
+
+      - name: Process video
+        shell: bash
+        env:
+          SEARCH_TERMS: ${{ inputs.search_terms }}
+          SCREENSHOT_INTERVAL: ${{ inputs.screenshot_interval }}
+        run: |
+          scripts/process-video.sh \
+            "$YOUTUBE_URL" \
+            "$OUTPUT_DIRECTORY" \
+            "$SEARCH_TERMS" \
+            "$SCREENSHOT_INTERVAL"
+
+      - name: Summarize results
+        shell: bash
+        run: |
+          {
+            echo '## Video processing results'
+            echo
+            echo "Generated files: $(find "$OUTPUT_DIRECTORY" -type f | wc -l)"
+            echo "Total size: $(du -sh "$OUTPUT_DIRECTORY" | cut -f1)"
+            echo
+            echo 'Download the `processed-video` artifact below to inspect the video, captions, metadata, and screenshots.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload processed files
+        uses: actions/upload-artifact@v4
+        with:
+          name: processed-video-${{ github.run_id }}
+          path: output/github-action/
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
